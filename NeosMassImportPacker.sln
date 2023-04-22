@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9376bcbf-cf6a-4d79-b689-9d9909190bd1}") = "NeosMassImportPacker", "NeosMassImportPacker\NeosMassImportPacker.csproj", "{d4e09296-3e48-4f33-a88b-e4769276b038}"
+EndProject
+Project("{9376bcbf-cf6a-4d79-b689-9d9909190bd1}") = "Test", "Test\Test.csproj", "{ca1a8f05-0236-4ac5-9dba-831186864d07}"
+	ProjectSection(ProjectDependencies) = postProject
+		{d4e09296-3e48-4f33-a88b-e4769276b038} = {d4e09296-3e48-4f33-a88b-e4769276b038}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{d4e09296-3e48-4f33-a88b-e4769276b038}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{d4e09296-3e48-4f33-a88b-e4769276b038}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{d4e09296-3e48-4f33-a88b-e4769276b038}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{d4e09296-3e48-4f33-a88b-e4769276b038}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ca1a8f05-0236-4ac5-9dba-831186864d07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ca1a8f05-0236-4ac5-9dba-831186864d07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ca1a8f05-0236-4ac5-9dba-831186864d07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ca1a8f05-0236-4ac5-9dba-831186864d07}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {d4e09296-3e48-4f33-a88b-e4769276b038}
+	EndGlobalSection
+EndGlobal

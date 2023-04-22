@@ -1,0 +1,57 @@
+name: Build/Release
+on: [push, pull_request]
+
+permissions:
+  contents: write
+
+env:
+  NeosPath: "${{ github.workspace }}/neos_install/" #see neos-modding-group/neos-plugin-setup-action
+  BUILD_TYPE: "CICD"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v3
+      - name: Setup build environment
+        uses: neos-modding-group/neos-plugin-setup-action@master
+        #TODO: check for possible caching of neos build env
+      - name: Download NeosModLoader and Harmony
+        run: |
+          mkdir -p "${NeosPath}/nml_libs" "${NeosPath}/Libraries"
+          cd "${NeosPath}/nml_libs" && wget "https://github.com/neos-modding-group/NeosModLoader/releases/latest/download/0Harmony.dll"
+          cd "${NeosPath}/Libraries" && wget "https://github.com/neos-modding-group/NeosModLoader/releases/latest/download/NeosModLoader.dll"
+      - name: Lint
+        run: dotnet format --verbosity detailed --verify-no-changes ./NeosMassImportPacker.sln
+      - name: Build binaries, create release directory structure
+        run: |
+          dotnet build ./NeosMassImportPacker.sln --configuration Release
+
+          mkdir ./release
+          mkdir ./release/nml_mods
+          mkdir ./release/nml_libs
+          
+          mv ./NeosMassImportPacker/bin/Release/net462/win-x64/NeosMassImportPacker.dll ./release/nml_mods/NeosMassImportPacker.dll
+      - name: Archive Release
+        uses: thedoctor0/zip-release@0.7.0
+        with:
+          type: 'zip'
+          filename: 'NeosMassImportPacker.zip'
+          path: '.'
+          directory: './release'
+      - name: Upload artifacts
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' # only publish workflow artifacts for pushes to main or tags
+        uses: actions/upload-artifact@v3
+        with:
+          name: NeosMassImportPacker
+          path: |
+            ./release/NeosMassImportPacker.zip
+          if-no-files-found: error
+      - name: Create release draft
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./release/NeosMassImportPacker.zip
+          draft: true
