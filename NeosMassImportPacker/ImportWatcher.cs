@@ -2,16 +2,13 @@
 using FrooxEngine;
 using FrooxEngine.LogiX;
 using FrooxEngine.LogiX.Data;
-using FrooxEngine.LogiX.Input;
-using FrooxEngine.LogiX.Meta;
+using FrooxEngine.LogiX.Operators;
 using FrooxEngine.LogiX.ProgramFlow;
 using FrooxEngine.LogiX.WorldModel;
 using FrooxEngine.UIX;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Xml.Linq;
 
 namespace NeosMassImportPacker
 {
@@ -77,27 +74,39 @@ namespace NeosMassImportPacker
             panel.CanvasScale = 0.25f / panel.CanvasSize.x;
 
             var builder = new UIBuilder(panel.Canvas);
-            builder.VerticalLayout();
+            builder.VerticalLayout(spacing: 4f);
 
             builder.Style.FlexibleHeight = 1;
             builder.ScrollArea();
 
             builder.Style.ForceExpandHeight = false;
-            listRoot = builder.VerticalLayout(childAlignment: Alignment.TopLeft).Slot;
+            listRoot = builder.VerticalLayout(spacing: 4f, childAlignment: Alignment.TopLeft).Slot;
             builder.FitContent(horizontal: SizeFit.Disabled, vertical: SizeFit.MinSize);
             builder.NestOut();
             //builder.NestOut();
 
             builder.Style.FlexibleHeight = -1;
             builder.Style.PreferredHeight = 24f;
-            
-            var button = builder.Button((LocaleString) "Pack into new Slot");
+
+            var parentSlotField = ui.AttachComponent<ReferenceField<Slot>>();
+            SyncMemberEditorBuilder.Build(parentSlotField.Reference, "Parent", null, builder);
+
+            var button = builder.Button();
+            var hasNoParent = button.Slot.AttachComponent<ReferenceEqualityDriver<Slot>>();
+            var buttonTextDriver = button.Slot.AttachComponent<BooleanValueDriver<string>>();
+            hasNoParent.TargetReference.Target = parentSlotField.Reference;
+            hasNoParent.Target.Target = buttonTextDriver.State;
+            buttonTextDriver.TargetField.Target = button.LabelTextField;
+            buttonTextDriver.TrueValue.Value = "Pack into new Slot";
+            buttonTextDriver.FalseValue.Value = "Reparent";
+
             builder.NestOut();
 
             var template = ui.AddSlot("Templates").AddSlot("Import Package");
 
             var logix = ui.AddSlot("LogiX");
-            CreateLogiX(logix, listRoot, template);
+            CreateLogiX(logix, listRoot, template, parentSlotField.Reference);
+
 
             var trigger = button.Slot.AttachComponent<ButtonDynamicImpulseTrigger>();
             trigger.Target.Target = logix;
@@ -105,26 +114,35 @@ namespace NeosMassImportPacker
 
         }
 
-        private static void CreateLogiX(Slot parent, Slot list, Slot template)
+        private static void CreateLogiX(Slot root, Slot list, Slot template, SyncRef<Slot> parent)
         {
-            var listRef = parent.AttachComponent<ReferenceRegister<Slot>>();
-            var templateRef = parent.AttachComponent<ReferenceRegister<Slot>>();
+            var listRef = root.AttachComponent<ReferenceRegister<Slot>>();
+            var templateRef = root.AttachComponent<ReferenceRegister<Slot>>();
+            var parentRef = root.AttachComponent<ReferenceRegister<Slot>>();
+            var parentRefDriver = parentRef.Slot.AttachComponent<ReferenceCopy<Slot>>();
+            parentRefDriver.Target.Target = parentRef.Target;
+            parentRefDriver.Source.Target = parent;
 
-            var receiverTag = parent.AttachComponent<ValueRegister<string>>();
-            var varNameSlot = parent.AttachComponent<ValueRegister<string>>();
-            var varNameActive = parent.AttachComponent<ValueRegister<string>>();
+            var receiverTag = root.AttachComponent<ValueRegister<string>>();
+            var varNameSlot = root.AttachComponent<ValueRegister<string>>();
+            var varNameActive = root.AttachComponent<ValueRegister<string>>();
 
-            var receiver = parent.AttachComponent<DynamicImpulseReceiver>();
-            var listCount = parent.AttachComponent<ChildrenCount>();
-            var forNode = parent.AttachComponent<ForNode>();
-            var getChild = parent.AttachComponent<GetChild>();
-            var readSlot = parent.AttachComponent<ReadDynamicVariable<Slot>>();
-            var readActive = parent.AttachComponent<ReadDynamicVariable<bool>>();
-            var ifNode = parent.AttachComponent<IfNode>();
-            var dupContainer = parent.AttachComponent<DuplicateSlot>();
-            var setParentOfContainer = parent.AttachComponent<SetParent>();
-            var setParentOfImported = parent.AttachComponent<SetParent>();
-            var rootSlot = parent.AttachComponent<RootSlot>();
+            var receiver = root.AttachComponent<DynamicImpulseReceiver>();
+
+            var parentIsNull = root.AttachComponent<IsNullNode<Slot>>();
+            var ifNullParent = root.AttachComponent<IfNode>();
+            var dupContainer = root.AttachComponent<DuplicateSlot>();
+            var setParentOfContainer = root.AttachComponent<SetParent>();
+            var parentCoalesce = root.AttachComponent<NullCoalesce<Slot>>();
+
+            var listCount = root.AttachComponent<ChildrenCount>();
+            var forNode = root.AttachComponent<ForNode>();
+            var getChild = root.AttachComponent<GetChild>();
+            var readSlot = root.AttachComponent<ReadDynamicVariable<Slot>>();
+            var readActive = root.AttachComponent<ReadDynamicVariable<bool>>();
+            var ifActive = root.AttachComponent<IfNode>();
+            var setParentOfImported = root.AttachComponent<SetParent>();
+            var rootSlot = root.AttachComponent<RootSlot>();
 
             listRef.Target.Target = list;
             templateRef.Target.Target = template;
@@ -133,13 +151,18 @@ namespace NeosMassImportPacker
             varNameSlot.Value.Value = DYN_VAR_ENTRY_SLOT;
             varNameActive.Value.Value = DYN_VAR_ENTRY_ACTIVE;
 
-
             receiver.Tag.TryConnectTo(receiverTag);
+
+            parentIsNull.Instance.TryConnectTo(parentRef);
+            ifNullParent.Condition.TryConnectTo(parentIsNull);
 
             dupContainer.Template.TryConnectTo(templateRef);
 
             setParentOfContainer.NewParent.TryConnectTo(rootSlot);
             setParentOfContainer.Instance.TryConnectTo(dupContainer.Duplicate);
+
+            parentCoalesce.A.TryConnectTo(parentRef);
+            parentCoalesce.B.TryConnectTo(dupContainer.Duplicate);
 
             listCount.Instance.TryConnectTo(listRef);
 
@@ -153,19 +176,25 @@ namespace NeosMassImportPacker
             readSlot.VariableName.TryConnectTo(varNameSlot);
             readActive.VariableName.TryConnectTo(varNameActive);
 
-            ifNode.Condition.TryConnectTo(readActive.Value);
+            ifActive.Condition.TryConnectTo(readActive.Value);
 
-            setParentOfImported.NewParent.TryConnectTo(dupContainer.Duplicate);
+            setParentOfImported.NewParent.TryConnectTo(parentCoalesce);
             setParentOfImported.Instance.TryConnectTo(readSlot.Value);
 
-            receiver.Impulse.Target = dupContainer.DoDuplicate;
+
+            receiver.Impulse.Target = ifNullParent.Run;
+            ifNullParent.True.Target = dupContainer.DoDuplicate;
+            ifNullParent.False.Target = forNode.Run;
+
             dupContainer.OnDuplicated.Target = setParentOfContainer.DoSetParent;
             setParentOfContainer.OnDone.Target = forNode.Run;
-            forNode.LoopIteration.Target = ifNode.Run;
-            ifNode.True.Target = setParentOfImported.DoSetParent;
+
+            forNode.LoopIteration.Target = ifActive.Run;
+            ifActive.True.Target = setParentOfImported.DoSetParent;
+
 
             receiverTag.RemoveAllLogixBoxes();
-            LogixHelper.MoveUnder(receiverTag, parent);
+            LogixHelper.MoveUnder(receiverTag, root);
         }
 
 
@@ -177,8 +206,8 @@ namespace NeosMassImportPacker
             builder.Style.PreferredHeight = 24f;
             builder.Style.MinHeight = 24f;
 
-            
             var entry = builder.Next(imported.Name);
+            builder.Nest();
 
             entry.AttachComponent<DynamicVariableSpace>().SpaceName.Value = DYN_VAR_SPACE;
 
@@ -188,8 +217,7 @@ namespace NeosMassImportPacker
             activeVar.VariableName.Value = DYN_VAR_ENTRY_ACTIVE;
             activeVar.Value.Value = true;
 
-
-            var checkbox = builder.Checkbox((LocaleString) imported.Name, state: true, labelFirst: false);
+            var checkbox = builder.Checkbox((LocaleString)imported.Name, state: true, labelFirst: false);
 
             checkbox.TargetState.Target = activeVar.Value;
         }
