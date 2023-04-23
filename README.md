@@ -13,3 +13,6 @@ A [NeosModLoader](https://github.com/zkxs/NeosModLoader) mod for [Neos VR](https
 - You can check/uncheck individual imports to select which one will be moved.
 - When no parent object is selected a new one will be created under Root.
 - Hit the button "Pack into new Slot"/"Reparent" to move all selected imports into a new/existing parent.
+
+## Example
+![Example image](pictures/Example.png)
