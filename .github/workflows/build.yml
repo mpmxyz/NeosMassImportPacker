@@ -24,13 +24,15 @@ jobs:
           cd "${NeosPath}/Libraries" && wget "https://github.com/neos-modding-group/NeosModLoader/releases/latest/download/NeosModLoader.dll"
       - name: Lint
         run: dotnet format --verbosity detailed --verify-no-changes ./NeosMassImportPacker.sln
-      - name: Build binaries, create release directory structure
+      - name: Build binaries, create release directory structure, calculate checksums
         run: |
           dotnet build ./NeosMassImportPacker.sln --configuration Release
 
           mkdir ./release
           
           mv ./NeosMassImportPacker/bin/Release/net462/win-x64/NeosMassImportPacker.dll ./release/NeosMassImportPacker.dll
+          
+          sha256sum ./release/**
       - name: Upload artifacts
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' # only publish workflow artifacts for pushes to main or tags
         uses: actions/upload-artifact@v3
