@@ -63,11 +63,13 @@ namespace NeosMassImportPacker
         {
             UniLog.Log($"spawn ui");
             var ui = firstRoot.Parent.AddSlot("Mass Import Packer");
+            ui.Tag = "Developer";
             ui.AttachComponent<Grabbable>();
             ui.GlobalPosition = firstRoot.GlobalPosition + firstRoot.Backward * 0.1f;
             ui.GlobalRotation = firstRoot.GlobalRotation;
 
             var panel = ui.AttachComponent<NeosCanvasPanel>();
+            panel.Canvas.Slot.Tag = "Developer";
             panel.Panel.Title = "Mass Import Packer";
             panel.Panel.AddCloseButton();
             panel.CanvasSize = new float2(250, 500);
@@ -107,11 +109,9 @@ namespace NeosMassImportPacker
             var logix = ui.AddSlot("LogiX");
             CreateLogiX(logix, listRoot, template, parentSlotField.Reference);
 
-
             var trigger = button.Slot.AttachComponent<ButtonDynamicImpulseTrigger>();
             trigger.Target.Target = logix;
             trigger.PressedTag.Value = DYN_IMPULSE_TAG;
-
         }
 
         private static void CreateLogiX(Slot root, Slot list, Slot template, SyncRef<Slot> parent)
