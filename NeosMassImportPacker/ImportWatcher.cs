@@ -30,7 +30,6 @@ namespace NeosMassImportPacker
 
         internal void OnImport(Slot imported)
         {
-            UniLog.Log($"onImport {imported.Name}");
             DateTime now = DateTime.UtcNow;
             TimeSpan gap = now - lastUpdate;
             lock (this)
@@ -61,7 +60,6 @@ namespace NeosMassImportPacker
 
         private void SpawnUI()
         {
-            UniLog.Log($"spawn ui");
             var ui = firstRoot.Parent.AddSlot("Mass Import Packer");
             ui.Tag = "Developer";
             ui.AttachComponent<Grabbable>();
@@ -200,8 +198,6 @@ namespace NeosMassImportPacker
 
         private void AddImportToUI(Slot imported)
         {
-            UniLog.Log($"addImportToUI {imported.Name}");
-
             var builder = new UIBuilder(listRoot);
             builder.Style.PreferredHeight = 24f;
             builder.Style.MinHeight = 24f;
@@ -224,7 +220,6 @@ namespace NeosMassImportPacker
 
         private void Init(Slot root)
         {
-            UniLog.Log($"init {root.Name}");
             firstRoot = root;
             listRoot = null;
             alreadyImported.Clear();
