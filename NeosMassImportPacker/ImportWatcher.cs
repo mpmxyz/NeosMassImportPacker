@@ -268,7 +268,7 @@ namespace NeosMassImportPacker
             receiverTag.RemoveAllLogixBoxes();
             LogixHelper.MoveUnder(receiverTag, root);
         }
-        
+
         private static void CreateLogiX_Update(Slot logixRoot, Slot listRoot, IValue<bool> allSelected)
         {
             var listRef = logixRoot.AttachComponent<ReferenceNode<Slot>>();
@@ -316,7 +316,6 @@ namespace NeosMassImportPacker
             onChildrenEvents.RemoveAllLogixBoxes();
             LogixHelper.MoveUnder(onChildrenEvents, logixRoot);
         }
-
 
         private static void AddImportToUI(Slot listRoot, Slot imported)
         {
@@ -388,7 +387,7 @@ namespace NeosMassImportPacker
 
             var trigger = logixRoot.AttachComponent<DynamicImpulseReceiverWithValue<bool>>();
             var writeVar = logixRoot.AttachComponent<WriteDynamicVariable<bool>>();
-            
+
             //values
             triggerTag.Value.Value = DYN_IMPULSE_TAG_SET;
             varName.Value.Value = DYN_VAR_ENTRY_ACTIVE;
