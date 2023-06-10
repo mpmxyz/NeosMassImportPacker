@@ -22,13 +22,16 @@ copy "$(AssemblyName).dll" "$(NeosPath)\nml_mods\"
     </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath>$(NeosPath)\nml_libs\0Harmony.dll</HintPath>
+    <Reference Include="NeosAssetImportHook">
+      <HintPath>$(NeosPath)\nml_mods\NeosAssetImportHook.dll</HintPath>
     </Reference>
-    <Reference Include="BaseX">
+	<Reference Include="0Harmony">
+	  <HintPath>$(NeosPath)\nml_libs\0Harmony.dll</HintPath>
+	</Reference>
+	<Reference Include="BaseX">
       <HintPath>$(NeosPath)\Neos_Data\Managed\BaseX.dll</HintPath>
     </Reference>
-    <Reference Include="CodeX">
+	<Reference Include="CodeX">
       <HintPath>$(NeosPath)\Neos_Data\Managed\CodeX.dll</HintPath>
     </Reference>
     <Reference Include="FrooxEngine">
