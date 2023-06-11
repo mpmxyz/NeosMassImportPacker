@@ -30,21 +30,8 @@ namespace NeosMassImportPacker
 
         private static NeosMassImportPackerMod Instance;
 
-        internal static float MaxGap
-        {
-            get
-            {
-                return Instance?.GetConfiguration()?.GetValue(KEY_MAX_GAP) ?? 10;
-            }
-        }
-
-        internal static bool PersistUI
-        {
-            get
-            {
-                return !(Instance?.GetConfiguration()?.GetValue(KEY_NON_PERSISTENT_UI) ?? false);
-            }
-        }
+        internal static float MaxGap => Instance?.GetConfiguration()?.GetValue(KEY_MAX_GAP) ?? 10;
+        internal static bool PersistUI => !(Instance?.GetConfiguration()?.GetValue(KEY_NON_PERSISTENT_UI) ?? false);
 
         public override void OnEngineInit()
         {
