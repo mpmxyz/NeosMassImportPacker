@@ -14,7 +14,7 @@ namespace NeosMassImportPacker
     {
         public override string Name => "NeosMassImportPacker";
         public override string Author => "mpmxyz";
-        public override string Version => "1.1.0";
+        public override string Version => "2.0.0";
         public override string Link => "https://github.com/mpmxyz/NeosMassImportPacker/";
 
         [AutoRegisterConfigKey]
