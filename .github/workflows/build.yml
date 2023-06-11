@@ -19,7 +19,7 @@ jobs:
         #TODO: check for possible caching of neos build env
       - name: Download NeosModLoader and Harmony
         run: |
-          mkdir -p "${NeosPath}/nml_libs" "${NeosPath}/Libraries"
+          mkdir -p "${NeosPath}/nml_libs" "${NeosPath}/nml_mods" "${NeosPath}/Libraries"
           cd "${NeosPath}/nml_libs" && wget "https://github.com/neos-modding-group/NeosModLoader/releases/latest/download/0Harmony.dll"
           cd "${NeosPath}/nml_mods" && wget "https://github.com/mpmxyz/NeosAssetImportHook/releases/latest/download/NeosAssetImportHook.dll"
           cd "${NeosPath}/Libraries" && wget "https://github.com/neos-modding-group/NeosModLoader/releases/latest/download/NeosModLoader.dll"
