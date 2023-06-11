@@ -77,7 +77,7 @@ namespace NeosMassImportPacker
                     {
                         Slot firstImported = alreadyImported.OrderBy(slot => slot.ReferenceID).First();
                         World world = firstImported.World;
-                        floatQ rotation = floatQ.LookRotation(firstImported.GlobalPosition - world.LocalUserViewPosition);
+                        floatQ rotation = floatQ.LookRotation((firstImported.GlobalPosition - world.LocalUserViewPosition) * new float3(1, 0, 1));
                         listRoot = SpawnUI(world.LocalUserSpace, firstImported.GlobalPosition, rotation, world.LocalUserGlobalScale);
                         listRoot.OnPrepareDestroy += (oldRoot) => Clear();
 
