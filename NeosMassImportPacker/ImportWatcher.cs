@@ -6,6 +6,7 @@ using FrooxEngine.LogiX.Data;
 using FrooxEngine.LogiX.Input;
 using FrooxEngine.LogiX.Operators;
 using FrooxEngine.LogiX.ProgramFlow;
+using FrooxEngine.LogiX.Undo;
 using FrooxEngine.LogiX.WorldModel;
 using FrooxEngine.UIX;
 using System;
@@ -17,6 +18,8 @@ namespace NeosMassImportPacker
     internal class ImportWatcher
     {
         private const int MIN_COUNT = 2;
+
+        private const string UNDO_DESCRIPTION = "Pack assets";
 
         private const string DYN_IMPULSE_TAG_PACK = "pack";
         private const string DYN_IMPULSE_TAG_UPDATE = "update";
@@ -209,19 +212,23 @@ namespace NeosMassImportPacker
             var varNameActive = root.AttachComponent<ValueRegister<string>>();
 
             var receiver = root.AttachComponent<DynamicImpulseReceiver>();
+            var undoDescription = root.AttachComponent<ValueRegister<string>>();
+            var createUndoBatch = root.AttachComponent<CreateUndoBatch>();
 
             var parentIsNull = root.AttachComponent<IsNullNode<Slot>>();
             var ifNullParent = root.AttachComponent<IfNode>();
             var dupContainer = root.AttachComponent<DuplicateSlot>();
+            var createParentDupUndo = root.AttachComponent<CreateSpawnUndoStep>();
             var setParentOfContainer = root.AttachComponent<SetParent>();
             var setDupAsParent = root.AttachComponent<WriteValueNode<Slot>>();
 
             //loop:
             var ifActive = root.AttachComponent<IfNode>();
+            var createTransformUndo = root.AttachComponent<CreateTransformUndoStep>();
             var setParentOfImported = root.AttachComponent<SetParent>();
             var rootSlot = root.AttachComponent<RootSlot>();
 
-            var triggerLoop = CreateLogiX_ForEach(root, parentReg, out var child, onEach: ifActive.Run);
+            var triggerLoop = CreateLogiX_ForEach(root, listReg, out var child, onEach: ifActive.Run);
 
             var entrySlot = CreateLogiX_ReadDynamicVariable<Slot>(root, child, varNameSlot);
             var entryActive = CreateLogiX_ReadDynamicVariable<bool>(root, child, varNameActive);
@@ -230,6 +237,7 @@ namespace NeosMassImportPacker
             listReg.Target.Target = list;
             templateReg.Target.Target = template;
             parentRegRef.Target.Target = parentReg;
+            undoDescription.Value.Value = UNDO_DESCRIPTION;
 
             receiverTag.Value.Value = DYN_IMPULSE_TAG_PACK;
             varNameSlot.Value.Value = DYN_VAR_ENTRY_SLOT;
@@ -237,10 +245,14 @@ namespace NeosMassImportPacker
 
             receiver.Tag.TryConnectTo(receiverTag);
 
+            createUndoBatch.Description.Target = undoDescription;
+
             parentIsNull.Instance.TryConnectTo(parentReg);
             ifNullParent.Condition.TryConnectTo(parentIsNull);
 
             dupContainer.Template.TryConnectTo(templateReg);
+
+            createParentDupUndo.Target.Target = dupContainer.Duplicate;
 
             setParentOfContainer.NewParent.TryConnectTo(rootSlot);
             setParentOfContainer.Instance.TryConnectTo(dupContainer.Duplicate);
@@ -250,19 +262,24 @@ namespace NeosMassImportPacker
 
             ifActive.Condition.TryConnectTo(entryActive);
 
-            setParentOfImported.NewParent.TryConnectTo(parentReg);
+            createTransformUndo.Target.Target = entrySlot;
+
             setParentOfImported.Instance.TryConnectTo(entrySlot);
+            setParentOfImported.NewParent.TryConnectTo(parentReg);
 
             //impulses
-            receiver.Impulse.Target = ifNullParent.Run;
+            receiver.Impulse.Target = createUndoBatch.DoCreate;
+            createUndoBatch.Create.Target = ifNullParent.Run;
             ifNullParent.True.Target = dupContainer.DoDuplicate;
             ifNullParent.False.Target = triggerLoop;
 
-            dupContainer.OnDuplicated.Target = setParentOfContainer.DoSetParent;
+            dupContainer.OnDuplicated.Target = createParentDupUndo.Create;
+            createParentDupUndo.OnCreated.Target = setParentOfContainer.DoSetParent;
             setParentOfContainer.OnDone.Target = setDupAsParent.Write;
             setDupAsParent.OnDone.Target = triggerLoop;
 
-            ifActive.True.Target = setParentOfImported.DoSetParent;
+            ifActive.True.Target = createTransformUndo.Create;
+            createTransformUndo.OnCreated.Target = setParentOfImported.DoSetParent;
 
             //pack
             receiverTag.RemoveAllLogixBoxes();
